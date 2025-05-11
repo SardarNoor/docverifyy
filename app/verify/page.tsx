@@ -4,9 +4,8 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import contractABI from "@/artifacts/contracts/DocumentVerifier.sol/DocumentVerifier.json";
+import { DocumentVerifierAddress as CONTRACT_ADDRESS } from "@/constants";
 import { Card } from "@/components/ui/card";
-
-const CONTRACT_ADDRESS = "0x5fbdb2315678afecb367f032d93f642f64180aa3";
 
 export default function VerifyQRPage() {
   const [status, setStatus] = useState<string | null>(null);

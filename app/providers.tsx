@@ -1,9 +1,12 @@
 "use client";
 
+import { ReactNode } from "react";
 import { http, createConfig, WagmiConfig } from "wagmi";
 import { localhost } from "viem/chains";
 import { metaMask } from "wagmi/connectors";
-import { ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 const config = createConfig({
   chains: [localhost],
@@ -15,5 +18,9 @@ const config = createConfig({
 });
 
 export function Providers({ children }: { children: ReactNode }) {
-  return <WagmiConfig config={config}>{children}</WagmiConfig>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <WagmiConfig config={config}>{children}</WagmiConfig>
+    </QueryClientProvider>
+  );
 }
