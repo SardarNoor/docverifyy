@@ -1,31 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FileCheck, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useAccount, useConnect } from "wagmi";
+import { metaMask } from "wagmi/connectors";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [account, setAccount] = useState("");
-
-  useEffect(() => {
-    if (typeof window.ethereum !== "undefined") {
-      window.ethereum.on("accountsChanged", (accounts: string[]) => {
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-        } else {
-          setAccount("");
-        }
-      });
-    }
-  }, []);
-
-  const connectWallet = async () => {
-    if (!window.ethereum) return alert("MetaMask is not installed");
-    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-    setAccount(accounts[0]);
-  };
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
 
   return (
     <nav className="bg-white shadow sticky top-0 z-50">
@@ -40,8 +25,12 @@ export default function Navbar() {
             <Link href="/manualverify" className="text-gray-700 hover:text-blue-600 font-medium">Manual Verify</Link>
             <Link href="/history" className="text-gray-700 hover:text-blue-600 font-medium">History</Link>
             <Link href="/about" className="text-gray-700 hover:text-blue-600 font-medium">About</Link>
-            <Button onClick={connectWallet} className="text-sm px-4 py-2">
-              {account ? `${account.slice(0, 6)}...${account.slice(-4)}` : "Connect Wallet"}
+
+            <Button
+              onClick={() => connect({ connector: metaMask() })}
+              className="text-sm px-4 py-2"
+            >
+              {isConnected ? `${address?.slice(0, 6)}...${address?.slice(-4)}` : "Connect Wallet"}
             </Button>
           </div>
 
@@ -58,8 +47,11 @@ export default function Navbar() {
             <Link href="/manualverify" className="text-gray-700 hover:text-blue-600">Manual Verify</Link>
             <Link href="/history" className="text-gray-700 hover:text-blue-600">History</Link>
             <Link href="/about" className="text-gray-700 hover:text-blue-600">About</Link>
-            <Button onClick={connectWallet} className="w-full">
-              {account ? `${account.slice(0, 6)}...${account.slice(-4)}` : "Connect Wallet"}
+            <Button
+              onClick={() => connect({ connector: metaMask() })}
+              className="w-full"
+            >
+              {isConnected ? `${address?.slice(0, 6)}...${address?.slice(-4)}` : "Connect Wallet"}
             </Button>
           </div>
         </div>

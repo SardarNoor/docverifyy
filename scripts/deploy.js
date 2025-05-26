@@ -1,19 +1,32 @@
 const hre = require("hardhat");
+const fs = require("fs");
+const path = require("path");
 
 async function main() {
-  // Get the ContractFactory and deploy the contract
+  // Deploy the contract
   const DocumentVerifier = await hre.ethers.getContractFactory("DocumentVerifier");
   const documentVerifier = await DocumentVerifier.deploy();
+  await documentVerifier.deployed();
 
-  await documentVerifier.deployed(); // ✅ Wait for it to finish
+  const address = documentVerifier.address;
+  console.log("✅ DocumentVerifier deployed to:", address);
 
-  console.log("✅ DocumentVerifier deployed to:", documentVerifier.address); // ✅ Print address
+  // Prepare .env.local content
+  const envPath = path.resolve(__dirname, "..", ".env.local");
+  const envLine = `NEXT_PUBLIC_CONTRACT_ADDRESS=${address}\n`;
+
+  try {
+    fs.writeFileSync(envPath, envLine, { encoding: "utf-8" });
+    console.log("✅ .env.local updated successfully.");
+  } catch (err) {
+    console.error("❌ Failed to write to .env.local:", err);
+  }
 }
 
-// Handle errors and execute the deployment script
+// Run the deployment
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error(error);
+    console.error("❌ Deployment failed:", error);
     process.exit(1);
   });

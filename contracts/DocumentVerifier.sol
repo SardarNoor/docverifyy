@@ -38,7 +38,7 @@ contract DocumentVerifier {
         address indexed verifier
     );
 
-    // ✅ Upload Document
+    // ✅ Upload Single Document
     function uploadDocument(
         string memory fileHash,
         string memory title,
@@ -53,15 +53,31 @@ contract DocumentVerifier {
         emit DocumentUploaded(fileHash, title, description, msg.sender, block.timestamp);
     }
 
-    // ✅ Verify Document (made 'view' to avoid sendTransaction requirement)
-    function verifyDocument(
-        string memory fileHash
-    ) public view returns (bool isValid) {
-        isValid = documents[fileHash].timestamp != 0;
-        // ❌ emit event not needed anymore since this is a view function
+    // ✅ Upload Multiple Documents
+    function uploadDocuments(
+        string[] memory fileHashes,
+        string memory title,
+        string memory description
+    ) public {
+        for (uint i = 0; i < fileHashes.length; i++) {
+            string memory fileHash = fileHashes[i];
+
+            require(bytes(fileHash).length > 0, "Invalid file hash");
+            require(documents[fileHash].timestamp == 0, "Document already exists");
+
+            documents[fileHash] = Document(fileHash, title, description, msg.sender, block.timestamp);
+            uploadsByAddress[msg.sender].push(fileHash);
+
+            emit DocumentUploaded(fileHash, title, description, msg.sender, block.timestamp);
+        }
     }
 
-    // ✅ Get Uploads by Wallet Address
+    // ✅ Verify Document
+    function verifyDocument(string memory fileHash) public view returns (bool isValid) {
+        isValid = documents[fileHash].timestamp != 0;
+    }
+
+    // ✅ Get All Uploads
     function getUploadsByAddress(address user) public view returns (Document[] memory) {
         string[] memory fileHashes = uploadsByAddress[user];
         Document[] memory result = new Document[](fileHashes.length);
@@ -70,10 +86,8 @@ contract DocumentVerifier {
         }
         return result;
     }
-   
 
-
-    // ✅ Manual Verify Page - Document Info
+    // ✅ Get Document Details
     function getDocumentDetails(string memory fileHash) public view returns (
         string memory title,
         string memory description,
@@ -82,5 +96,43 @@ contract DocumentVerifier {
     ) {
         Document memory doc = documents[fileHash];
         return (doc.title, doc.description, doc.owner, doc.timestamp);
+    }
+
+    // ✅ Delete Document
+    function deleteDocument(string memory fileHash) public {
+        require(documents[fileHash].timestamp != 0, "Document does not exist");
+        require(documents[fileHash].owner == msg.sender, "Not the owner of this document");
+
+        delete documents[fileHash];
+
+        string[] storage userUploads = uploadsByAddress[msg.sender];
+        for (uint i = 0; i < userUploads.length; i++) {
+            if (keccak256(bytes(userUploads[i])) == keccak256(bytes(fileHash))) {
+                userUploads[i] = userUploads[userUploads.length - 1];
+                userUploads.pop();
+                break;
+            }
+        }
+    }
+
+    // ✅ Delete Multiple Documents in One Transaction
+    function deleteDocuments(string[] memory fileHashes) public {
+        for (uint i = 0; i < fileHashes.length; i++) {
+            string memory fileHash = fileHashes[i];
+
+            require(documents[fileHash].timestamp != 0, "One of the documents does not exist");
+            require(documents[fileHash].owner == msg.sender, "Not the owner of one or more documents");
+
+            delete documents[fileHash];
+
+            string[] storage userUploads = uploadsByAddress[msg.sender];
+            for (uint j = 0; j < userUploads.length; j++) {
+                if (keccak256(bytes(userUploads[j])) == keccak256(bytes(fileHash))) {
+                    userUploads[j] = userUploads[userUploads.length - 1];
+                    userUploads.pop();
+                    break;
+                }
+            }
+        }
     }
 }

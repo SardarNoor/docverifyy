@@ -9,18 +9,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 const queryClient = new QueryClient();
 
 const config = createConfig({
+  connectors: [metaMask()], // ✅ clean and correct
   chains: [localhost],
   transports: {
     [localhost.id]: http(),
   },
-  connectors: [metaMask()],
   ssr: true,
 });
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <WagmiConfig config={config}>{children}</WagmiConfig>
+      <WagmiConfig config={config}>
+        {children}
+      </WagmiConfig>
     </QueryClientProvider>
   );
 }
